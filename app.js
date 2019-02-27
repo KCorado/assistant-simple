@@ -115,14 +115,18 @@ function updateMessage(input, response) {
   if (!response.output) {
     response.output = {};
   } else {
-    // Check if the intent returned from Conversation service is add or multiply, 
+    // Check if the intent returned from Conversation service is add, multiply, 
+    // subtract, divide, or exponent,
     // perform the calculation and update the response. 
     // Starting with V2, intents are accessible through the output property of the response 
     // and not directly from the response object
     // Reference: https://cloud.ibm.com/apidocs/assistant-v2?language=node#send-user-input-to-assistant
   	if (response.output.intents.length > 0 && 
   		  (response.output.intents[0].intent === 'add' || 
-  		   response.output. intents[0].intent === 'multiply')) {
+         response.output. intents[0].intent === 'multiply' ||
+         response.output. intents[0].intent === 'subtraction' ||
+         response.output. intents[0].intent === 'division' ||
+         response.output. intents[0].intent === 'exponent' )) {
 			response = getCalculationResult(response);
 	}
     return response;
@@ -171,12 +175,28 @@ function getCalculationResult(response){
 	}
 	
 	// In case the user intent is add, perform the addition
-	// In case the intent is multiply, perform the multiplication
+  // In case the intent is multiply, perform the multiplication
+  // Same applies for the other functions including subtraction, division, and exponent
 	var result = 0;
 	if (response.output.intents[0].intent === 'add') {
 		result = parseInt(numbersArr[0]) + parseInt(numbersArr[1]);
 	} else if (response.output.intents[0].intent === 'multiply') {
 		result = parseInt(numbersArr[0]) * parseInt(numbersArr[1]);
+	} else if (response.output.intents[0].intent === 'subtraction') {
+		result = parseInt(numbersArr[0]) - parseInt(numbersArr[1]);
+  } else if (response.output.intents[0].intent === 'division') {
+    // will need to check for divide by 0 cases to prevent exception
+    var num1 = parseInt(numbersArr[0]);
+    var num2 = parseInt(numbersArr[1]);
+
+    if (num2 != 0){
+      result = num1 / num2;
+    } else {
+      result = NaN
+    }
+
+	} else if (response.output.intents[0].intent === 'exponent') {
+		result =  Math.pow(parseInt(numbersArr[0]), parseInt(numbersArr[1]));
 	}
 	
 	// Replace _result_ in Conversation Service response, with the actual calculated result
